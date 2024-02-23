@@ -1,0 +1,462 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <iomanip> //To set alignment width
+#include <limits>
+
+//a structure for representing an item in the player and merchant inventory
+struct Item {
+	std::string name;
+	int buyPrice; //Player buys item for this price
+	int sellPrice; //Player sells item for this price
+	int quantity;
+	bool used; //Added to items that the player can sell back to the merchant at lower price
+};
+
+//Function to display inventory
+void displayInventory(const std::vector<Item>& inventory, bool showBuyPrice) {
+	std::cout << "\n\n\n" <<
+		std::setw(4) << "No." <<
+		std::setw(25) << "Item";
+	if (showBuyPrice) {
+		std::cout << std::setw(25) << "Buy Price";
+	}
+	else {
+		std::cout << std::setw(25) << "Sell Price";
+	}
+	std::cout << std::setw(25) << "Quantity" <<
+		std::endl;
+
+	//Iterate through each item in the inventory and display its details
+	for (size_t i = 0; i < inventory.size(); ++i) {
+		std::cout << std::setw(4) << i + 1
+			<< std::setw(25) << inventory[i].name;
+
+		//check if item is sold out
+		if (inventory[i].quantity == 0) {
+			std::cout << std::setw(25) << "Sold out";
+		}
+		else {
+			//Display buy or sell price
+			if (showBuyPrice) {
+				std::cout << std::setw(25) << inventory[i].buyPrice;
+			}
+			else {
+				std::cout << std::setw(25) << inventory[i].sellPrice;
+			}
+			std::cout << std::setw(25) << inventory[i].quantity;
+		}
+		std::cout << std::endl;
+	}
+}
+
+int main() {
+	//Welcome message boolean
+	bool initialWelcome = true;
+
+	//Merchant Inventory
+	std::vector<Item> MerchantInventory = {
+		{"Armor", 250, 200, 1, false}, {"used Armor", 225, 200, 0, false}, {"Arrows", 15, 10, 45, false}, {"used Arrows", 12, 10, 0, false}, {"Bow", 200, 150, 1, false}, {"used Bow", 175, 150, 0, false}, {"Health Potion", 50, 0, 5, false},
+		{"Mana Potion", 75, 0, 2, false}, {"Shield", 180, 130, 1, false}, {"used Shield", 155, 130, 0, false}, {"Sword", 150, 100, 1, false}, {"used Sword", 125, 100, 0, false}
+	};
+
+	//Player Inventory
+	std::vector<Item> PlayerInventory = {
+		{"Necklace", 0, 180, 3}, {"Flask", 0, 25, 6}, {"Monocle", 0, 80, 2}, {"Golden Pen", 0, 150, 2}, {"Rings", 0, 120, 4}, {"Golden Silverware", 0, 200, 1}, {"Scroll", 0, 70, 4}
+	};
+
+	//Player's Currency 
+	int PlayerCurrency = 550;
+
+	//Display welcome message
+	while (true) {
+		if (initialWelcome) {
+			std::cout << "Hello, Welcome to Cameron Merchants" << std::endl;
+			std::cout << "We sell items that will help you on your journey" << std::endl;
+			std::cout << "We also buy interesting items you find" << '\n';
+			initialWelcome = false;
+		}
+		//Prompt for the player
+		std::cout << "\n\nHow may I help you" << std::endl;
+		std::cout << "[B]uy [S]ell or [l]eave" << std::endl;
+
+		//Boolean for players choice
+		std::string choice;
+		bool validChoice = false;
+
+		do {
+			std::cout << ">";
+			std::cin >> choice;
+
+			//check if input is greater than 1
+			if (choice.length() > 1) {
+				std::cout << "\nInvalid choice, please enter single character[B], [S] or [L]" << std::endl;
+				std::cout << "\n\nHow may I help you" << std::endl;
+				std::cout << "[B]uy [S]ell or [l]eave" << std::endl;
+				continue;
+			}
+
+
+			//convert players input to lowercase to match with an option
+			char lowercase_choice = tolower(choice[0]);
+			switch (lowercase_choice) {
+
+			case 'b': {
+
+				//check if merchant inventory is completely sold out 
+				bool SoldOut = true;
+				for (const auto& item : MerchantInventory) {
+					if (item.quantity > 0) {
+						SoldOut = false;
+						break;
+					}
+				}
+				//If sold out display message 
+				if (SoldOut) {
+					std::cout << "\n\n";
+					std::cout << "Cameron Merchants is all sold out. Thank you for visiting. Please come again." << std::endl;
+					std::cout << "Your currency: $" << PlayerCurrency << std::endl;
+					break;
+				}
+
+				std::cout << "\n You have chosen to buy. Here is a list of items we sell" << std::endl;
+
+				//List of loot items that can't be bought after player sells them
+				for (auto it = MerchantInventory.begin(); it != MerchantInventory.end(); ) {
+					if (it->name == "Necklace" || it->name == "used Necklace" ||
+						it->name == "Flask" || it->name == "used Flask" ||
+						it->name == "Monocle" || it->name == "used Monocle" ||
+						it->name == "Golden Pen" || it->name == "used Golden Pen" ||
+						it->name == "Rings" || it->name == "used Rings" ||
+						it->name == "Golden Silverware" || it->name == "used Golden Silverware" ||
+						it->name == "Scroll" || it->name == "used Scroll")
+					{
+						it = MerchantInventory.erase(it);
+					}
+					else {
+						++it;
+					}
+				}
+
+				//Display Merchant Inventory
+				displayInventory(MerchantInventory, true);
+
+				int buyChoice;
+				do {
+					//prompts player to choose an item to buy
+					std::cout << "\n\nYour currency: $" << PlayerCurrency << std::endl;
+					std::cout << "Choose an item to buy: ";
+					std::cin >> buyChoice;
+
+					//Validates player input
+					if (std::cin.fail() || buyChoice < 1 || buyChoice > MerchantInventory.size()) {
+						std::cout << "\n\nInvalid option, please choose a valid item number." << std::endl;
+
+						//Display Merchant Inventory
+						displayInventory(MerchantInventory, true);
+						std::cin.clear();
+						std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+					}
+
+					//Check to see if player has enough funds to buy
+					else {
+						Item selected_item = MerchantInventory[buyChoice - 1];
+						if (selected_item.buyPrice > PlayerCurrency) {
+							std::cout << "\nInsufficient funds, please select another item.";
+							displayInventory(MerchantInventory, true);
+						}
+
+
+						//check quantity in stock
+						else if (selected_item.quantity <= 0) {
+							std::cout << "\nSorry we are sold out, please select another item.";
+							displayInventory(MerchantInventory, true);
+						}
+						//Proceed with purchase
+						else {
+							std::cout << "\n\n";
+							std::cout << "You chose to buy " << selected_item.name << "." << std::endl;
+
+							//Get quantity of items being bought
+							int quantityBought;
+							std::cout << "Enter the quantity to buy: ";
+							std::cin >> quantityBought;
+
+							//Don't allow an amount 0 or below to be entered
+							if (std::cin.fail() || quantityBought <= 0) {
+								std::cout << "\nInvalid quantity" << std::endl;
+								std::cin.clear();
+								std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+								displayInventory(MerchantInventory, true);
+								continue;
+							}
+
+							//Check if quantity being bought exceeds quantity in Merchant inventory
+							if (quantityBought > selected_item.quantity) {
+								std::cout << "\nYou can't buy more than what is in stock," << std::endl;
+								displayInventory(MerchantInventory, true);
+								continue;
+							}
+
+							//Check if the player has enough funds to buy the items
+							if (selected_item.buyPrice * quantityBought > PlayerCurrency) {
+								std::cout << "\n";
+								std::cout << "You don't have enough funds to buy that quantity" << std::endl;
+								displayInventory(MerchantInventory, true);
+								continue;
+							}
+
+							//Calculate Merchant total price
+							int totalPrice = selected_item.buyPrice * quantityBought;
+
+							//Confirm the purchase
+							std::cout << "\n\n";
+							std::cout << "You chose to buy " << quantityBought << " " << selected_item.name << " for a total of $" << totalPrice << "." << std::endl;
+							std::cout << "Confirm purchase [Y}es or [N]o: ";
+							char confirm;
+							bool validConfirm = false;
+							do {
+								std::cin >> confirm;
+
+								//Check if more than one character is entered
+								if (std::cin.peek() != '\n') {
+									std::cout << "Invalid input. Please enter [Y] or [N]: " << std::endl;
+									std::cin.clear();
+
+									std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+								}
+
+								//check if y or n is entered
+								else if (confirm == 'Y' || confirm == 'y' || confirm == 'N' || confirm == 'n') {
+									validConfirm = true;
+								}
+								else {
+									std::cout << "\nInvalid input. Please enter [Y]es or [N]o: ";
+									std::cin.clear();
+
+									std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+								}
+							} while (!validConfirm);
+
+							if (confirm == 'N' || confirm == 'n') {
+								std::cout << "\nPurchase Cancelled." << std::endl;
+								displayInventory(MerchantInventory, true);
+								continue;
+							}
+
+
+							// Deduct price of item from player
+							PlayerCurrency -= totalPrice;
+
+							//Check if item exists in player's inventory
+							bool itemExists = false;
+							for (auto& item : PlayerInventory) {
+								if (item.name == selected_item.name) {
+									itemExists = true;
+									item.quantity += quantityBought;
+									break;
+								}
+							}
+
+							//Add the item to Player's inventory if it doesn't exist
+							if (!itemExists) {
+								selected_item.quantity = quantityBought;
+								PlayerInventory.push_back(selected_item);
+							}
+
+							// Decrease the item quantity from Merchant inventory
+							MerchantInventory[buyChoice - 1].quantity -= quantityBought;
+							std::cout << "\n\n";
+							std::cout << "Purchase successful, thank you for buying from Cameron Merchants" << std::endl;
+							validChoice = true;
+						}
+					}
+				} while (!validChoice);
+				break;
+			}
+
+			case 's': {
+				//If quantity of an item in player inventory is 0 remove from player inventory
+				PlayerInventory.erase(std::remove_if(PlayerInventory.begin(), PlayerInventory.end(), []
+				(const Item& item) { return item.quantity == 0; }),
+					PlayerInventory.end());
+
+				//if player inventory is completely empty display message
+				if (PlayerInventory.empty()) {
+					std::cout << "\n";
+					std::cout << "Your inventory is empty, you have nothing to sell." << std::endl;
+					std::cout << "\n\n";
+					std::cout << "How may I help you" << std::endl;
+					std::cout << "[B]uy [S]ell or [l]eave" << std::endl;
+					break;
+				}
+				//Display Player inventory
+				std::cout << "\nYou chose to sell. Lets take a look inside your inventory" << std::endl;
+				displayInventory(PlayerInventory, false);
+
+				int sellChoice;
+				do {
+					//Prompts player to select item to sell
+					std::cout << "\n\nYour currency : $" << PlayerCurrency << std::endl;
+					std::cout << "Select an item to sell: ";
+					std::cin >> sellChoice;
+
+					//validate input
+					if (std::cin.fail() || sellChoice < 1 || sellChoice > PlayerInventory.size()) {
+						std::cout << "Invalid choice, please choose a valid item number." << std::endl;
+
+						displayInventory(PlayerInventory, false);
+
+						std::cin.clear();
+						std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+					}
+
+					else {
+						Item selected_item = PlayerInventory[sellChoice - 1];
+
+						//Check if item is a potion, potions can't be sold
+						if
+							(selected_item.name == "Health Potion" || selected_item.name == "Mana Potion")
+						{
+							std::cout << "\nYou are not able to sell " << selected_item.name << " try using this item instead." << std::endl;
+							displayInventory(PlayerInventory, false);
+						}
+
+						else {
+							//Check if item being sold is loot
+							bool isCollectible =
+								(selected_item.name == "Necklace" ||
+									selected_item.name == "Flask" ||
+									selected_item.name == "Monocle" ||
+									selected_item.name == "Golden Pen" ||
+									selected_item.name == "Rings" ||
+									selected_item.name == "Golden Silverware" ||
+									selected_item.name == "Scroll");
+
+							if (isCollectible) {
+								std::cout << "\nYou are selling loot. Once sold you wont be able to buy it back." << std::endl;
+							}
+
+							//Items being sold to Merchant add used to the name
+							if (selected_item.name.find("used ") == std::string::npos) {
+								selected_item.name = "used " + selected_item.name;
+							}
+
+							std::cout << "\n\nYou have chosen to sell " << selected_item.name << "." << std::endl;
+
+							//Get quantity of items being sold
+							int quantitySold;
+							std::cout << "Enter the quantity to sell: ";
+							std::cin >> quantitySold;
+
+							//Make sure quantity is greater than 0
+							if (std::cin.fail() || quantitySold <= 0) {
+								std::cout << "\nInvalid quantity." << std::endl;
+								continue;
+							}
+
+							//Check if quantity being sold exceeds quantity in inventory
+							if (quantitySold > selected_item.quantity) {
+								std::cout << "\nYou can't sell more than what you have in your inventory," << std::endl;
+								displayInventory(PlayerInventory, false);
+								continue;
+							}
+
+							//Confirming the sale
+							std::cout << "\n\nYou chose to sell " << quantitySold << " " << selected_item.name << " for a total of $" << selected_item.sellPrice * quantitySold << "." << std::endl;
+							std::cout << "Confirm [Y}es or [N]o: ";
+							char confirm;
+							bool validConfirm = false;
+							do {
+								std::cin >> confirm;
+
+								//Check if more than one character is entered
+								if (std::cin.peek() != '\n') {
+									std::cout << "\nInvalid input. Please enter [Y] or [N]: " << std::endl;
+									std::cin.clear();
+
+									std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+								}
+
+								else if (confirm == 'Y' || confirm == 'y' || confirm == 'N' || confirm == 'n') {
+									validConfirm = true;
+								}
+								else {
+									std::cout << "\nInvalid input. Please enter [Y]es or [N]o: ";
+									std::cin.clear();
+
+									std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+								}
+							} while (!validConfirm);
+
+							if (confirm == 'N' || confirm == 'n') {
+								std::cout << "Cancelled Selling item." << std::endl;
+								continue;
+							}
+
+							//Add price to player's currency
+							PlayerCurrency += selected_item.sellPrice * quantitySold;
+
+
+							//Decrease the quantity of the sold item
+							PlayerInventory[sellChoice - 1].quantity -= quantitySold;
+
+							//Check if Quantity in the Player Inventory is 0, if yes remove item from inventory list
+							if (PlayerInventory[sellChoice - 1].quantity == 0) {
+								PlayerInventory.erase(PlayerInventory.begin() + (sellChoice - 1));
+							}
+
+							//Search for existing used item if found increase quantity
+							bool found = false;
+							for (auto& item : MerchantInventory) {
+								if (item.name == selected_item.name) {
+									item.quantity += quantitySold;
+									found = true;
+									break;
+								}
+							}
+
+							//If used item doesn't exist add it to the merchant's inventory
+							if (!found) {
+								selected_item.quantity = quantitySold;
+								MerchantInventory.push_back(selected_item);
+							}
+
+							//Remove used item name from the list when quantity is 0
+							for (auto it = MerchantInventory.begin(); it != MerchantInventory.end(); ++it) {
+								if (it->name == selected_item.name && it->quantity <= 0) {
+									MerchantInventory.erase(it);
+									break;
+								}
+							}
+							validChoice = true;
+						}
+					}
+				} while (!validChoice);
+				break;
+			}
+
+			case 'l':
+				//Display goodbye message and Player's currency
+				std::cout << "\n\nThank you for visiting Cameron Merchants. please come again!!!" << std::endl;
+				std::cout << "Your currency: $" << PlayerCurrency << std::endl;
+				return 0;
+
+				//Display default message
+			default:
+				std::cout << "\n\nHow may I help you" << std::endl;
+				std::cout << "[B]uy [S]ell or [l]eave" << std::endl;
+				break;
+			}
+
+			//Clear the input if player makes invalid choice
+			std::cin.clear();
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+		} while (!validChoice);
+
+		std::cout << "Your currency: $" << PlayerCurrency << std::endl;
+	}
+	//end game
+	return 0;
+}
