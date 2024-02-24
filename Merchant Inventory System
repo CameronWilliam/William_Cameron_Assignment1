@@ -319,9 +319,10 @@ int main() {
 							(selected_item.name == "Health Potion" || selected_item.name == "Mana Potion")
 						{
 							std::cout << "\nYou are not able to sell " << selected_item.name << " try using this item instead." << std::endl;
-							displayInventory(PlayerInventory, false);
+							std::cout << "Please make a selection [B]uy, [S]ell or [L]eave" << std::endl;
+							break;
 						}
-
+						
 						else {
 							//Check if item being sold is loot
 							bool isCollectible =
@@ -390,7 +391,8 @@ int main() {
 							} while (!validConfirm);
 
 							if (confirm == 'N' || confirm == 'n') {
-								std::cout << "Cancelled Selling item." << std::endl;
+								std::cout << "\nCancelled Selling item." << std::endl;
+								displayInventory(PlayerInventory, false);
 								continue;
 							}
 
